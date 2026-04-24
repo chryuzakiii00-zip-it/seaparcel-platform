@@ -255,7 +255,7 @@ else:
     for ship in list(st.session_state.active_shipments):
         if ship['Status'] == "TRANSIT":
             elapsed = time.time() - ship.get('Dispatch_Time', time.time())
-            if elapsed >= 3600.0: 
+            if elapsed >= 1800.0: 
                 st.session_state.delivered_shipments.append(ship)
                 st.session_state.active_shipments.remove(ship)
                 
@@ -371,7 +371,7 @@ else:
                             st.markdown("<div class='badge badge-booked'>BOOKED</div>", unsafe_allow_html=True)
                             
                             if st.session_state.user_name != "Port Authority":
-                                if st.button("Cancel Order", key=f"cancel_{ship['Tracking ID']}", use_container_width=True):
+                                if st.button("Cancel Order", key=f"cancel_{ship['Tracking ID']}", type="primary", use_container_width=True):
                                     st.session_state.active_shipments = [s for s in st.session_state.active_shipments if s['Tracking ID'] != ship['Tracking ID']]
                                     st.session_state.show_toast = "Booking Cancelled"
                                     st.rerun()
@@ -542,7 +542,7 @@ else:
                     for ship in st.session_state.active_shipments:
                         if ship['Status'] == "TRANSIT":
                             elapsed = time.time() - ship.get('Dispatch_Time', time.time())
-                            prog = min(elapsed / 3600.0, 1.0)
+                            prog = min(elapsed / 1800.0, 1.0)
                             ports_dict = {"Manila": [14.59, 120.98], "Ilocos": [18.01, 120.48], "Cebu": [10.31, 123.89]}
                             origin = ports_dict[ship['Route'].split(" ➔ ")[0]]
                             dest = ports_dict[ship['Route'].split(" ➔ ")[1]]
@@ -619,7 +619,7 @@ else:
                 
                 # Calculate progress based on the 4-hour (14,400 seconds) timer
                 elapsed = time.time() - ship.get('Dispatch_Time', time.time())
-                prog = min(elapsed / 3600.0, 1.0)
+                prog = min(elapsed / 1800.0, 1.0)
                 
                 # Live accumulating weight
                 w_eff = w_real * prog
@@ -660,37 +660,11 @@ else:
                         "Waste Type": ["Plastic", "Woods", "Paper", "Oil Spill"],
                         "Amount (kg)": [p, wd, pa, o] 
                     })
+                    fig = px.pie(df_materials, values="Amount (kg)", names="Waste Type", hole=0.5, 
+                                 color_discrete_sequence=["#00B4D8", "#8B4513", "#F4A460", "#2F4F4F"])
+                    fig.update_traces(textposition='inside', textinfo='percent+label')
                     
-                    # Hardcode the exact colors so they never get mixed up by sorting
-                    color_mapping = {
-                        "Plastic": "#00B4D8",   
-                        "Woods": "#8B4513",     
-                        "Paper": "#F4A460",     
-                        "Oil Spill": "#2F4F4F"  
-                    }
-                    
-                    fig = px.pie(
-                        df_materials, 
-                        values="Amount (kg)", 
-                        names="Waste Type", 
-                        hole=0.5, 
-                        color="Waste Type",
-                        color_discrete_map=color_mapping
-                    )
-                    
-                   # Force text to stay horizontal and never rotate awkwardly
-                    fig.update_traces(
-                        textposition='auto', 
-                        texttemplate='%{label}<br><b>%{value:.3f} kg</b>',
-                        sort=False,
-                        insidetextorientation='horizontal' 
-                    )
-                    
-                # Expand the margins slightly so outside labels (like Oil Spill) don't get cropped
-                fig.update_layout(
-                    margin=dict(t=40, b=40, l=40, r=40), 
-                    showlegend=False
-                )
+                fig.update_layout(margin=dict(t=0, b=0, l=0, r=0), showlegend=False)
                 st.plotly_chart(fig, use_container_width=True)
             
         st.divider()
