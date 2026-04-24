@@ -255,7 +255,7 @@ else:
     for ship in list(st.session_state.active_shipments):
         if ship['Status'] == "TRANSIT":
             elapsed = time.time() - ship.get('Dispatch_Time', time.time())
-            if elapsed >= 90.0: 
+            if elapsed >= 14400.0: 
                 st.session_state.delivered_shipments.append(ship)
                 st.session_state.active_shipments.remove(ship)
                 
@@ -368,7 +368,7 @@ else:
                         st.caption(f"Client: {ship.get('Owner')} | Route: {ship['Route']} | Cargo: {ship['Type']} | Weight: {ship['Weight']} kg")
                     with c3:
                         if ship['Status'] == "BOOKED":
-                            st.markdown("<div class='status-badge-blue'>BOOKED</div>", unsafe_allow_html=True)
+                            st.markdown("<div class='badge badge-booked'>BOOKED</div>", unsafe_allow_html=True)
                             
                             if st.session_state.user_name != "Port Authority":
                                 if st.button("Cancel Order", key=f"cancel_{ship['Tracking ID']}", use_container_width=True):
@@ -387,10 +387,10 @@ else:
                                     st.rerun()
                                     
                         elif ship['Status'] == "TRANSIT":
-                            st.markdown("<div class='status-badge-green'>IN TRANSIT</div>", unsafe_allow_html=True)
+                            st.markdown("<div class='badge badge-transit'>In Transit</div>", unsafe_allow_html=True)
                             
                             if st.session_state.user_name == "Port Authority":
-                                if st.button("✅ Force Early Delivery", key=f"deliver_{ship['Tracking ID']}", type="secondary", use_container_width=True):
+                                if st.button("✅ Marked Delivered", key=f"deliver_{ship['Tracking ID']}", type="primary", use_container_width=True):
                                     st.session_state.delivered_shipments.append(ship)
                                     st.session_state.active_shipments = [s for s in st.session_state.active_shipments if s['Tracking ID'] != ship['Tracking ID']]
                                     st.session_state.show_balloons = True
@@ -542,7 +542,7 @@ else:
                     for ship in st.session_state.active_shipments:
                         if ship['Status'] == "TRANSIT":
                             elapsed = time.time() - ship.get('Dispatch_Time', time.time())
-                            prog = min(elapsed / 90.0, 1.0)
+                            prog = min(elapsed / 14400.0, 1.0)
                             ports_dict = {"Manila": [14.59, 120.98], "Ilocos": [18.01, 120.48], "Cebu": [10.31, 123.89]}
                             origin = ports_dict[ship['Route'].split(" ➔ ")[0]]
                             dest = ports_dict[ship['Route'].split(" ➔ ")[1]]
