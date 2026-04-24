@@ -689,7 +689,11 @@ else:
                     )
                     
 # Expand the margins slightly so outside labels never get cropped
-                fig.update_layout(margin=dict(t=40, b=40, l=40, r=40), showlegend=False)
+                fig.update_layout(
+                    margin=dict(t=40, b=100, l=40, r=40), 
+                    showlegend=False,
+                    height=450
+                )
                 st.plotly_chart(fig, use_container_width=True)
             
         st.divider()
