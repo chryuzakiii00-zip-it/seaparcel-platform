@@ -538,35 +538,73 @@ else:
             t_col1, t_col2 = st.columns([2, 1])
             
             with t_col1:
-                if st.button("📡 Ping Satellites for Live GPS Update", use_container_width=True):
-                    for ship in st.session_state.active_shipments:
-                        if ship['Status'] == "TRANSIT":
-                            elapsed = time.time() - ship.get('Dispatch_Time', time.time())
-                            prog = min(elapsed / 1800.0, 1.0)
-                            ports_dict = {"Manila": [14.59, 120.98], "Ilocos": [18.01, 120.48], "Cebu": [10.31, 123.89]}
-                            origin = ports_dict[ship['Route'].split(" ➔ ")[0]]
-                            dest = ports_dict[ship['Route'].split(" ➔ ")[1]]
-                            ship['lat'] = origin[0] + (dest[0] - origin[0]) * prog
-                            ship['lon'] = origin[1] + (dest[1] - origin[1]) * prog
+                # Custom Ocean Waypoints
+                route_waypoints = {
+                    "Manila ➔ Ilocos": [
+                        [14.59, 120.98], # Manila Port
+                        [14.35, 120.60], # Exit Manila Bay
+                        [15.20, 119.80], # West of Zambales Coast
+                        [16.80, 120.00], # West of La Union Coast
+                        [18.01, 120.48]  # Ilocos Port
+                    ],
+                    "Ilocos ➔ Manila": [
+                        [18.01, 120.48], # Ilocos Port
+                        [16.80, 120.00], # West of La Union Coast
+                        [15.20, 119.80], # West of Zambales Coast
+                        [14.35, 120.60], # Enter Manila Bay
+                        [14.59, 120.98]  # Manila Port
+                    ],
+                    "Cebu ➔ Manila": [
+                        [10.31, 123.89], # Cebu Port
+                        [11.50, 123.50], # Visayan Sea
+                        [12.80, 122.50], # Sibuyan Sea
+                        [13.60, 120.80], # Verde Island Passage
+                        [14.35, 120.60], # Enter Manila Bay
+                        [14.59, 120.98]  # Manila Port
+                    ]
+                }
+
+                # Helper function to move the ship smoothly along the waypoints
+                def get_point_on_path(path, progress):
+                    if progress <= 0: return path[0]
+                    if progress >= 1: return path[-1]
+                    total_segments = len(path) - 1
+                    segment_index = int(progress * total_segments)
+                    segment_progress = (progress * total_segments) - segment_index
+                    if segment_index >= total_segments: return path[-1]
+                    
+                    start_pt = path[segment_index]
+                    end_pt = path[segment_index + 1]
+                    lat = start_pt[0] + (end_pt[0] - start_pt[0]) * segment_progress
+                    lon = start_pt[1] + (end_pt[1] - start_pt[1]) * segment_progress
+                    return [lat, lon]
+
+                if st.button("📡 Ping Satellites (Force Refresh)", use_container_width=True): 
                     st.rerun()
 
                 m = folium.Map(location=[13.5, 121.5], zoom_start=5.5, tiles="CartoDB positron")
-                ports = {"Manila": [14.59, 120.98], "Ilocos": [18.01, 120.48], "Cebu": [10.31, 123.89]}
                 
                 for ship in view_active:
                     try:
-                        o_name, d_name = ship['Route'].split(" ➔ ")
-                        plugins.AntPath([ports[o_name], ports[d_name]], color="#0077B6", weight=3).add_to(m)
+                        route_name = ship['Route']
+                        path = route_waypoints.get(route_name, [])
+                        
+                        # Draw the custom dashed path along the ocean
+                        if path:
+                            plugins.AntPath(path, color="#0077B6", weight=3).add_to(m)
                         
                         if ship['Status'] == "TRANSIT":
-                            pos = [ship.get('lat', ports[o_name][0]), ship.get('lon', ports[o_name][1])]
-                            icon_col = "green"
-                        else:
-                            pos = ports[o_name]
-                            icon_col = "blue"
+                            elapsed = time.time() - ship.get('Dispatch_Time', time.time())
+                            # Remember to change 300.0 back to 14400.0 if you want the full 4-hour timer!
+                            prog = min(elapsed / 300.0, 1.0) 
                             
-                        folium.Marker(pos, popup=f"<b>{ship['Tracking ID']}</b>", icon=folium.Icon(color=icon_col, icon='ship', prefix='fa')).add_to(m)
-                    except:
+                            # Calculate exactly where the ship is along the ocean waypoints
+                            current_pos = get_point_on_path(path, prog)
+                            
+                            folium.Marker(current_pos, popup=f"<b>{ship['Tracking ID']}</b>", icon=folium.Icon(color="green", icon='ship', prefix='fa')).add_to(m)
+                        else:
+                            folium.Marker(path[0], popup=f"<b>{ship['Tracking ID']}</b>", icon=folium.Icon(color="blue", icon='ship', prefix='fa')).add_to(m)
+                    except Exception as e: 
                         pass
                 
                 with st.container(border=True):
