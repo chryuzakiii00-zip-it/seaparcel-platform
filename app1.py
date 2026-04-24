@@ -560,11 +560,11 @@ else:
                     ],
                     "Cebu ➔ Manila": [
                         [10.31, 123.89], # Cebu Port
-                        [11.50, 123.50], # Visayan Sea
-                        [12.50, 122.50], # Sibuyan Sea (Avoiding Masbate/Panay)
+                        [11.25, 124.05], # Camotes Sea (Navigating North of Cebu)
+                        [11.75, 123.20], # Jintotolo Channel (Between Masbate and Panay)
+                        [12.60, 122.20], # Tablas Strait
                         [13.50, 120.90], # Verde Island Passage
-                        [14.20, 120.50], # Approaching Manila Bay
-                        [14.30, 120.50], # Entering Manila Bay
+                        [14.25, 120.55], # Approaching Corregidor / Manila Bay
                         [14.59, 120.98]  # Manila Port
                     ]
                 }
