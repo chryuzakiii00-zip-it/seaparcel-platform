@@ -255,7 +255,7 @@ else:
     for ship in list(st.session_state.active_shipments):
         if ship['Status'] == "TRANSIT":
             elapsed = time.time() - ship.get('Dispatch_Time', time.time())
-            if elapsed >= 14400.0: 
+            if elapsed >= 3600.0: 
                 st.session_state.delivered_shipments.append(ship)
                 st.session_state.active_shipments.remove(ship)
                 
@@ -542,7 +542,7 @@ else:
                     for ship in st.session_state.active_shipments:
                         if ship['Status'] == "TRANSIT":
                             elapsed = time.time() - ship.get('Dispatch_Time', time.time())
-                            prog = min(elapsed / 14400.0, 1.0)
+                            prog = min(elapsed / 3600.0, 1.0)
                             ports_dict = {"Manila": [14.59, 120.98], "Ilocos": [18.01, 120.48], "Cebu": [10.31, 123.89]}
                             origin = ports_dict[ship['Route'].split(" ➔ ")[0]]
                             dest = ports_dict[ship['Route'].split(" ➔ ")[1]]
@@ -591,53 +591,74 @@ else:
                         st.metric("Hybrid Battery", "100%", "Charging (Grid)")
                         st.metric("Waste Intake Flow", "0.0 m³/min", "Offline")
 
-    # ==========================================
+ # ==========================================
     # PAGE 4: ESG METRICS & ROI
     # ==========================================
     elif st.session_state.current_page == "ESG Metrics":
-        st.title("Environmental Impact & ROI")
         
-        total_plastic = total_woods = total_paper = total_oil = total_cargo_weight = 0
-        in_transit_shipments = [ship for ship in view_active if ship["Status"] == "TRANSIT"]
+        # Add the sync button next to the title
+        col_title, col_btn = st.columns([4, 1])
+        with col_title:
+            st.title("Environmental Impact & ROI")
+        with col_btn:
+            st.write("<br>", unsafe_allow_html=True)
+            if st.button("🔄 Sync Live Data", use_container_width=True):
+                st.rerun()
         
-        if len(in_transit_shipments) > 0:
-            for ship in in_transit_shipments:
-                weight = ship["Weight"]
-                total_cargo_weight += weight
+        transit_ships = [ship for ship in view_active if ship["Status"] == "TRANSIT"]
+        
+        # Track physical weight for financials, and effective weight for live ESG
+        w_tot_physical = 0 
+        w_tot_effective = 0 
+        p = wd = pa = o = 0
+        
+        if len(transit_ships) > 0:
+            for ship in transit_ships:
+                w_real = ship["Weight"]
+                w_tot_physical += w_real
+                
+                # Calculate progress based on the 4-hour (14,400 seconds) timer
+                elapsed = time.time() - ship.get('Dispatch_Time', time.time())
+                prog = min(elapsed / 3600.0, 1.0)
+                
+                # Live accumulating weight
+                w_eff = w_real * prog
+                w_tot_effective += w_eff
+                
                 if "Cebu" in ship["Route"]:
-                    total_plastic += weight * 0.062 
-                    total_woods += weight * 0.021
-                    total_paper += weight * 0.008
-                    total_oil += weight * 0.005
+                    p += w_eff * 0.062 
+                    wd += w_eff * 0.021
+                    pa += w_eff * 0.008
+                    o += w_eff * 0.005
                 else:
-                    total_plastic += weight * 0.041 
-                    total_woods += weight * 0.048
-                    total_paper += weight * 0.004
-                    total_oil += weight * 0.002
+                    p += w_eff * 0.041 
+                    wd += w_eff * 0.048
+                    pa += w_eff * 0.004
+                    o += w_eff * 0.002
 
-        total_waste_removed = total_plastic + total_woods + total_paper + total_oil
-        carbon_offset = total_cargo_weight * 0.12
+        total_waste_removed = p + wd + pa + o
+        carbon_offset_so_far = w_tot_effective * 0.12
 
         e_col1, e_col2 = st.columns([1, 2])
         
         with e_col1:
             with st.container(border=True):
                 st.markdown("#### Real-time ESG Impact")
-                st.metric("Total Cargo in Transit", f"{total_cargo_weight:,.0f} kg")
-                st.metric("Ocean Waste Removed", f"{total_waste_removed:,.1f} kg", "Verified via AI" if total_waste_removed > 0 else None)
-                st.metric("Carbon Emissions Offset", f"{carbon_offset:,.1f} kg CO2", "Certified" if total_cargo_weight > 0 else None)
+                st.metric("Total Cargo in Transit", f"{w_tot_physical:,.0f} kg")
+                st.metric("Ocean Waste Removed", f"{total_waste_removed:,.2f} kg", "Active AI Harvesting" if total_waste_removed > 0 else None)
+                st.metric("Carbon Emissions Offset", f"{carbon_offset_so_far:,.2f} kg CO2", "Accumulating" if carbon_offset_so_far > 0 else None)
             
         with e_col2:
             with st.container(border=True):
                 st.markdown("#### Validated Waste Composition")
-                if total_cargo_weight == 0:
+                if w_tot_effective == 0:
                     st.info("Awaiting vessels to enter transit to generate live AI waste composition.")
                     fig = px.pie(values=[1], names=["No Data"], hole=0.4, color_discrete_sequence=["#e0e0e0"])
                     fig.update_traces(textinfo='none', hoverinfo='none')
                 else:
                     df_materials = pd.DataFrame({
                         "Waste Type": ["Plastic", "Woods", "Paper", "Oil Spill"],
-                        "Amount (kg)": [total_plastic, total_woods, total_paper, total_oil] 
+                        "Amount (kg)": [p, wd, pa, o] 
                     })
                     fig = px.pie(df_materials, values="Amount (kg)", names="Waste Type", hole=0.5, 
                                  color_discrete_sequence=["#00B4D8", "#8B4513", "#F4A460", "#2F4F4F"])
@@ -654,10 +675,13 @@ else:
             traditional_rate = 65.0  
             seaparcel_rate = 45.0    
             
-            traditional_cost = total_cargo_weight * traditional_rate
-            seaparcel_cost = total_cargo_weight * seaparcel_rate
+            # Financials are based on physical weight, not progress
+            traditional_cost = w_tot_physical * traditional_rate
+            seaparcel_cost = w_tot_physical * seaparcel_rate
             total_savings = traditional_cost - seaparcel_cost
-            carbon_tax_savings = (carbon_offset / 1000) * 2500 if total_cargo_weight > 0 else 0
+            
+            # Tax savings are based on the live accumulating carbon offset
+            carbon_tax_savings = (carbon_offset_so_far / 1000) * 2500 if carbon_offset_so_far > 0 else 0
             
             with roi_col1:
                 st.metric("Traditional Freight Cost", f"₱{traditional_cost:,.2f}")
