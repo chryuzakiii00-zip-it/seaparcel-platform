@@ -617,24 +617,26 @@ else:
                 w_real = ship["Weight"]
                 w_tot_physical += w_real
                 
-                # Calculate progress based on the 4-hour (14,400 seconds) timer
+                # Calculate progress based on the 4 hour (14400 seconds) timer
+                # Note: Keeping your current 300.0 (5 mins) demo timer here based on your code
                 elapsed = time.time() - ship.get('Dispatch_Time', time.time())
-                prog = min(elapsed / 1800.0, 1.0)
+                prog = min(elapsed / 1800.0, 1.0) 
                 
                 # Live accumulating weight
                 w_eff = w_real * prog
                 w_tot_effective += w_eff
                 
+                # Use random.uniform to make the live AI data fluctuate slightly
                 if "Cebu" in ship["Route"]:
-                    p += w_eff * 0.062 
-                    wd += w_eff * 0.021
-                    pa += w_eff * 0.008
-                    o += w_eff * 0.005
+                    p += w_eff * random.uniform(0.058, 0.066) 
+                    wd += w_eff * random.uniform(0.018, 0.024)
+                    pa += w_eff * random.uniform(0.006, 0.010)
+                    o += w_eff * random.uniform(0.003, 0.007)
                 else:
-                    p += w_eff * 0.041 
-                    wd += w_eff * 0.048
-                    pa += w_eff * 0.004
-                    o += w_eff * 0.002
+                    p += w_eff * random.uniform(0.038, 0.044) 
+                    wd += w_eff * random.uniform(0.045, 0.051)
+                    pa += w_eff * random.uniform(0.002, 0.006)
+                    o += w_eff * random.uniform(0.001, 0.003)
 
         total_waste_removed = p + wd + pa + o
         carbon_offset_so_far = w_tot_effective * 0.12
@@ -660,11 +662,34 @@ else:
                         "Waste Type": ["Plastic", "Woods", "Paper", "Oil Spill"],
                         "Amount (kg)": [p, wd, pa, o] 
                     })
-                    fig = px.pie(df_materials, values="Amount (kg)", names="Waste Type", hole=0.5, 
-                                 color_discrete_sequence=["#00B4D8", "#8B4513", "#F4A460", "#2F4F4F"])
-                    fig.update_traces(textposition='inside', textinfo='percent+label')
                     
-                fig.update_layout(margin=dict(t=0, b=0, l=0, r=0), showlegend=False)
+                    # Hardcode the exact colors so they never get mixed up by sorting
+                    color_mapping = {
+                        "Plastic": "#00B4D8",   
+                        "Woods": "#8B4513",     
+                        "Paper": "#F4A460",     
+                        "Oil Spill": "#2F4F4F"  
+                    }
+                    
+                    fig = px.pie(
+                        df_materials, 
+                        values="Amount (kg)", 
+                        names="Waste Type", 
+                        hole=0.5, 
+                        color="Waste Type",
+                        color_discrete_map=color_mapping
+                    )
+                    
+                    # Use 'auto' positioning, 3 decimal places, and force horizontal text
+                    fig.update_traces(
+                        textposition='auto', 
+                        texttemplate='%{label}<br><b>%{value:.3f} kg</b>',
+                        sort=False,
+                        insidetextorientation='horizontal'
+                    )
+                    
+                # Expand the margins slightly so outside labels never get cropped
+                fig.update_layout(margin=dict(t=40, b=40, l=40, r=40), showlegend=False)
                 st.plotly_chart(fig, use_container_width=True)
             
         st.divider()
@@ -675,7 +700,7 @@ else:
             traditional_rate = 65.0  
             seaparcel_rate = 45.0    
             
-            # Financials are based on physical weight, not progress
+            # Financials are based on physical weight
             traditional_cost = w_tot_physical * traditional_rate
             seaparcel_cost = w_tot_physical * seaparcel_rate
             total_savings = traditional_cost - seaparcel_cost
