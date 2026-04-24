@@ -584,7 +584,7 @@ else:
                     lon = start_pt[1] + (end_pt[1] - start_pt[1]) * segment_progress
                     return [lat, lon]
 
-                if st.button("📡 Ping Satellites (Force Refresh)", use_container_width=True): 
+                if st.button("📡 Ping Satellites for Live GPS Update", use_container_width=True): 
                     st.rerun()
 
                 m = folium.Map(location=[13.5, 121.5], zoom_start=5.5, tiles="CartoDB positron")
