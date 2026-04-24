@@ -538,28 +538,33 @@ else:
             t_col1, t_col2 = st.columns([2, 1])
             
             with t_col1:
-                # Custom Ocean Waypoints
+                # Custom Ocean Waypoints (Calibrated to avoid landmasses)
                 route_waypoints = {
                     "Manila ➔ Ilocos": [
                         [14.59, 120.98], # Manila Port
-                        [14.35, 120.60], # Exit Manila Bay
-                        [15.20, 119.80], # West of Zambales Coast
-                        [16.80, 120.00], # West of La Union Coast
+                        [14.30, 120.50], # South of Bataan (Exiting Manila Bay)
+                        [14.50, 120.20], # West of Bataan Peninsula
+                        [15.30, 119.80], # West of Zambales Coast
+                        [16.50, 119.70], # Clearing Bolinao Point
+                        [17.50, 120.20], # Coast of Vigan
                         [18.01, 120.48]  # Ilocos Port
                     ],
                     "Ilocos ➔ Manila": [
                         [18.01, 120.48], # Ilocos Port
-                        [16.80, 120.00], # West of La Union Coast
-                        [15.20, 119.80], # West of Zambales Coast
-                        [14.35, 120.60], # Enter Manila Bay
+                        [17.50, 120.20], # Coast of Vigan
+                        [16.50, 119.70], # Clearing Bolinao Point
+                        [15.30, 119.80], # West of Zambales Coast
+                        [14.50, 120.20], # West of Bataan Peninsula
+                        [14.30, 120.50], # South of Bataan (Entering Manila Bay)
                         [14.59, 120.98]  # Manila Port
                     ],
                     "Cebu ➔ Manila": [
                         [10.31, 123.89], # Cebu Port
                         [11.50, 123.50], # Visayan Sea
-                        [12.80, 122.50], # Sibuyan Sea
-                        [13.60, 120.80], # Verde Island Passage
-                        [14.35, 120.60], # Enter Manila Bay
+                        [12.50, 122.50], # Sibuyan Sea (Avoiding Masbate/Panay)
+                        [13.50, 120.90], # Verde Island Passage
+                        [14.20, 120.50], # Approaching Manila Bay
+                        [14.30, 120.50], # Entering Manila Bay
                         [14.59, 120.98]  # Manila Port
                     ]
                 }
