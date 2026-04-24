@@ -678,14 +678,19 @@ else:
                         color_discrete_map=color_mapping
                     )
                     
-                    # Fix: Use 'auto' positioning and show 3 decimal places for live accuracy
+                   # Force text to stay horizontal and never rotate awkwardly
                     fig.update_traces(
                         textposition='auto', 
                         texttemplate='%{label}<br><b>%{value:.3f} kg</b>',
-                        sort=False 
+                        sort=False,
+                        insidetextorientation='horizontal' 
                     )
                     
-                fig.update_layout(margin=dict(t=0, b=0, l=0, r=0), showlegend=False)
+                # Expand the margins slightly so outside labels (like Oil Spill) don't get cropped
+                fig.update_layout(
+                    margin=dict(t=40, b=40, l=40, r=40), 
+                    showlegend=False
+                )
                 st.plotly_chart(fig, use_container_width=True)
             
         st.divider()
