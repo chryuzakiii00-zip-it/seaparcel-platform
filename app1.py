@@ -688,9 +688,13 @@ else:
                         insidetextorientation='horizontal'
                     )
                     
-                # Expand the margins slightly so outside labels never get cropped
-                fig.update_layout(margin=dict(t=40, b=40, l=40, r=40), showlegend=False)
-                st.plotly_chart(fig, use_container_width=True)
+# Increased bottom margin (b=100) and set a fixed height to prevent clipping
+                fig.update_layout(
+                    margin=dict(t=40, b=100, l=40, r=40), 
+                    showlegend=False,
+                    height=450
+                )
+                st.plotly_chart(fig, use_container_width=True)plotly_chart(fig, use_container_width=True)
             
         st.divider()
         st.markdown("### 💰 Financial ROI & Business Value")
