@@ -662,7 +662,12 @@ else:
                     })
                     fig = px.pie(df_materials, values="Amount (kg)", names="Waste Type", hole=0.5, 
                                  color_discrete_sequence=["#00B4D8", "#8B4513", "#F4A460", "#2F4F4F"])
-                    fig.update_traces(textposition='inside', textinfo='percent+label')
+                    
+                    # NEW: Force the pie chart to show the exact live kg values on the slices
+                    fig.update_traces(
+                        textposition='inside', 
+                        texttemplate='%{label}<br><b>%{value:.1f} kg</b>'
+                    )
                     
                 fig.update_layout(margin=dict(t=0, b=0, l=0, r=0), showlegend=False)
                 st.plotly_chart(fig, use_container_width=True)
