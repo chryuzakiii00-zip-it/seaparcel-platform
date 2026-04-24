@@ -601,7 +601,7 @@ else:
                         if ship['Status'] == "TRANSIT":
                             elapsed = time.time() - ship.get('Dispatch_Time', time.time())
                             # Remember to change 300.0 back to 14400.0 if you want the full 4-hour timer!
-                            prog = min(elapsed / 300.0, 1.0) 
+                            prog = min(elapsed / 1800.0, 1.0) 
                             
                             # Calculate exactly where the ship is along the ocean waypoints
                             current_pos = get_point_on_path(path, prog)
